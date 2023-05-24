@@ -1,0 +1,36 @@
+load "msh3"
+load "iovtk"
+
+// Loop over generated samples
+for(int sample = 0; sample<500; sample++){
+
+    // Create a list to read in 4 random varaibles for stenosis geometry
+    real[int] list(4);
+
+    // Load the variables
+    ifstream file("data/raw/sample_"+sample+"/sample.txt");
+    for (int iii = 0; iii < 4; iii++){
+        file >> list[iii];
+    }
+
+    // Assign each values 
+    real uploc = list[0];
+    real loloc = list[1];
+    real upwid = list[2];
+    real lowid = list[3];
+
+    // cout << uploc << " " << loloc << " " << upwid << " " << lowid <<endl;
+
+    // Construct simulation domains 
+    int n1 = 20;
+    int n2 = 8*n1;
+    border ba(t=0,1.0){x=t*20.0;y=1/sqrt(2*pi*lowid^2)*exp(-square(x-20*loloc)/(2*lowid^2));label=1;};
+    border bb(t=0,1.0){x=20.0;y=2*t;label=2;};
+    border bc(t=1.0,0){x=t*20.0;y=2-1/sqrt(2*pi*upwid^2)*exp(-square(x-20*uploc)/(2*upwid^2));label=3;};
+    border bd(t=1.0,0){x=0;y=2*t;label=4;};
+    mesh Th=buildmesh(ba(n2)+bb(n1)+bc(n2)+bd(n1));
+
+    // Save data
+    savemesh(Th, "data/raw/sample_"+sample+"/sample.msh");
+    // savevtk("data/raw/sample_"+sample+"/rawdata.vtk",Th);
+}

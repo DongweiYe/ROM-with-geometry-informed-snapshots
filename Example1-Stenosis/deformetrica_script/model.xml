@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<model>
+
+    <model-type>Registration</model-type>
+    <dimension>2</dimension>
+
+    <template>
+        <object id="mesh">
+            <deformable-object-type>PointCloud</deformable-object-type>
+            <attachment-type>Current</attachment-type>
+            <noise-std>5e-3</noise-std>
+            <kernel-width>1</kernel-width>
+            <kernel-type>torch</kernel-type>
+            <filename>../data/reference/referboundary.vtk</filename>
+        </object>
+    </template>
+
+    <deformation-parameters>
+        <kernel-width>1</kernel-width>
+        <kernel-type>torch</kernel-type>
+    </deformation-parameters>
+
+</model>
