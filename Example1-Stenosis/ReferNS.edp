@@ -1,18 +1,16 @@
-
-
 for(int sample = 0; sample<100; sample++){
     cout<<"Sample:"+sample<<endl;
 
     /////// Import weights for each CP
     real[int] weights(726);
-    ifstream wfile("../../../MOR/Data/2DStenosis/Mapping/sample_"+sample+"/weights.txt");
+    ifstream wfile("data/mapping/sample_"+sample+"/weights.txt");
     for (int iii = 0; iii < 726; iii++){
         wfile >> weights[iii];
     }
 
     /////// Import CPs 
     real[int] cps(720);
-    ifstream cpfile("../../../MOR/Data/2DStenosis/Mapping/sample_"+sample+"/control.txt");
+    ifstream cpfile("data/mapping/control.txt");
     for (int iii = 0; iii < 720; iii++){
         cpfile >> cps[iii];
     }
@@ -167,8 +165,15 @@ for(int sample = 0; sample<100; sample++){
             }
     } //EOF
     ns;
-    plot(pc, ps="pressure.ps", value=1, fill=1);
-    plot([ucx, ucy], ps="velocity.ps", value=1, coef=.05);
+    // plot(pc, ps="pressure.ps", value=1, fill=1);
+    // plot([ucx, ucy], ps="velocity.ps", value=1, coef=.05);
+    ofstream uxfile("data/snapshots/sample_"+sample+"/u.txt");
+    uxfile << ux[] << endl;
+    ofstream uyfile("data/snapshots/sample_"+sample+"/v.txt");
+    uyfile << uy[] << endl;
+    ofstream pfile("data/snapshots/sample_"+sample+"/p.txt");
+    pfile << p[] << endl;
+
 
 
 }
