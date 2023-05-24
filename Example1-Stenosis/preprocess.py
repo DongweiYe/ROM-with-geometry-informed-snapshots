@@ -282,22 +282,27 @@ except:
 	print('Sth went wrong, please check')
 
 
+### Read in the undeformed data and save the control points
+OriBoundary = np.load("data/reference/boundary.npy")
+OriInner = np.load("data/reference/inner.npy")
+prename = "DeterministicAtlas__Reconstruction__mesh__subject_sample"
+np.savetxt('data/mapping/control.txt',np.hstack((OriBoundary[:,0],OriBoundary[:,1])))
+
+matcharray = []
+matcharraylabel = []
+
 for sample in range(num_samples):
 	if sample%100==0:
 		print('Handling sample:',sample)
 
-	### Read in the undeformed data
-	OriBoundary = np.load("data/reference/boundary.npy")
-	OriInner = np.load("data/reference/inner.npy")
 
 	### Read in deformed data
-	prename = "DeterministicAtlas__Reconstruction__mesh__subject_sample"
 	DefBoundary = readVTK("output/"+prename+str(sample)+".vtk")
 
-	### Clean and fix the inlet boundary due to regitration
+	### Clean and fix the inlet boundary due to registration
 	DefBoundary = cleanBC(DefBoundary,OriBoundary)
 	
-	### Train RBFI for intepolation 
+	### Train RBFI for intepolation, the last column of OriBoundary is the label for the boundary 
 	rbf = RBFInterpolator(OriBoundary[:,:2],DefBoundary,kernel='cubic',degree=1)
 	DefInner = rbf(OriInner[:,:2])
 
@@ -312,7 +317,6 @@ for sample in range(num_samples):
 
 	os.mkdir('data/mapping/sample_'+str(sample))
 	np.savetxt('data/mapping/sample_'+str(sample)+'/weights.txt',np.hstack((rbf._coeffs[:,0],rbf._coeffs[:,1])))
-	np.savetxt('data/mapping/sample_'+str(sample)+'/control.txt',np.hstack((OriBoundary[:,0],OriBoundary[:,1])))
 
 	### Copy the average.msh to the folder for further modification
 	shutil.copyfile('data/reference/reference.msh', 'data/SRmesh/'+str(sample)+'.msh')
@@ -321,27 +325,31 @@ for sample in range(num_samples):
 	v_num = OriBoundary.shape[0] + OriInner.shape[0]
 
 	### Open up the .msh file and match it with OriBoundary and OriInner
-	for i in range(1,v_num+1):
-		with open("data/SRmesh/"+str(sample)+".msh",'r') as txt:
-			text = txt.readlines()
-			currentline = text[i]
+	with open("data/SRmesh/"+str(sample)+".msh",'r') as txt:
+		text = txt.readlines()
+		
+		if sample == 0:
+			for i in range(1,v_num+1):
+				currentline = text[i]
+				coordinates = currentline.strip().split()
+				x = np.round(np.float64(coordinates[0]),decimals=12)
+				y = np.round(np.float64(coordinates[1]),decimals=12)
+				label =  int(coordinates[2])
 
-			coordinates = currentline.strip().split()
-			x = np.round(np.float64(coordinates[0]),decimals=12)
-			y = np.round(np.float64(coordinates[1]),decimals=12)
-			label =  int(coordinates[2])
+				for j in range(v_num):
 
-			for j in range(v_num):
+					if np.sqrt((OriNodes[j,0]-x)**2+(OriNodes[j,1]-y)**2) < 1e-4:
+						matcharray.append(j)
+						matcharraylabel.append(label)
+						break
 
-				if np.sqrt((OriNodes[j,0]-x)**2+(OriNodes[j,1]-y)**2) < 1e-4:
-					
-				### assign value from target.vtk -> source.msh
-					newline = str(DefNodes[j,0]) + ' ' + str(DefNodes[j,1]) + ' ' + str(label) + '\n'
-					text[i] = newline
-
-					break
-			with open("data/SRmesh/"+str(sample)+".msh",'w') as txt:
-				txt.writelines(text)
+		for i in range(1,v_num+1):
+			### assign value from target.vtk -> source.msh
+			newline = str(DefNodes[matcharray[i-1],0]) + ' ' + str(DefNodes[matcharray[i-1],1]) + ' ' + str(matcharraylabel[i-1]) + '\n'
+			text[i] = newline
+			
+		with open("data/SRmesh/"+str(sample)+".msh",'w') as txt:
+			txt.writelines(text)
 
 print('Step 5 - Mapping computation: done ')
 
@@ -363,6 +371,44 @@ except:
 	print('Sth went wrong, please check')
 
 
+
+### Extract boundary from vtk files
+for sample in range(num_samples):
+	if sample%100 == 0:
+		print('Handling sample:',sample)
+	
+	TargetMesh = open("data/SRmesh/"+str(sample)+".msh", "r")
+
+	### Read basic information of mesh
+	line = TargetMesh.readline()
+	words = line.strip().split()
+	v_num = int(words[0])
+	t_num = int(words[1])
+	e_num = int(words[2])
+
+	TargetMesh.close()
+	
+	### Create a list and copy out all the boundary vertices
+	BoundaryList = []
+
+	with open("data/SRmesh/"+str(sample)+".msh",'r') as txt:
+		text = txt.readlines()
+		
+		for i in range(1,v_num+1):	
+			currentline = text[i]
+
+			coordinates = currentline.strip().split()
+			x = np.round(np.float64(coordinates[0]),decimals=12)
+			y = np.round(np.float64(coordinates[1]),decimals=12)
+			label = int(coordinates[2])
+
+			if label !=0:
+				BoundaryList.append([x,y,label])
+	
+	np.save('data/raw/sample_'+str(sample)+'/SRboundary.npy',np.asarray(BoundaryList))
+
+
+
 RefList = np.load('data/reference/boundary.npy')
 # print(RefList.shape)
 
@@ -370,7 +416,7 @@ GeoPara = np.empty((0,RefList.shape[0]*2))
 # print(GeoPara.shape)
 
 for i in range(num_samples):
-	GeoList = np.load('data/raw/sample_'+str(i)+'/boundary.npy')
+	GeoList = np.load('data/raw/sample_'+str(i)+'/SRboundary.npy')
 
 	xcoord = GeoList[:,0] - RefList[:,0]
 	ycoord = GeoList[:,1] - RefList[:,1]
