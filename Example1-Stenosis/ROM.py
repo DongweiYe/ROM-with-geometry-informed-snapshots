@@ -245,7 +245,7 @@ def compute_l2_error(target,reference):
 ### Collecting the data generated from FreeFem
 ### Snapshot data directory
 
-raw_data_directory = 'data/rawresult'
+raw_data_directory = 'data/snapshots'
 
 ### Read number of vertice and create emtpy matrix for data storage
 v_num = vertices_num(raw_data_directory+'/sample_0/u.txt')
