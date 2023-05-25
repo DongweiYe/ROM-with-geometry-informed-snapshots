@@ -77,7 +77,7 @@ for(int sample = 0; sample<100; sample++){
 
 
 
-    mesh Mesh = readmesh("ReferenceMesh/reference.msh");
+    mesh Mesh = readmesh("data/reference/reference.msh");
 
     int[int] orderOut = [1, 1, 1, 1];
 
