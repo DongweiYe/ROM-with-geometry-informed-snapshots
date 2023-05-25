@@ -9,12 +9,17 @@ The repository contains all the necessary information/data to reproduce the resu
 ### Perform ROM with geometry-informed snapshots
 Each example consists of three main procedures: preprocessing, finite element simulations and reduced-order modelling. Each steps corresponding to a .py/.edp file:
 * `preprocess.py` contains following functions:
-  > Generate samples for geometry variaty         
-  > Shape and mesh generation based on samples (use file: MeshGeneration.edp & ReferMeshGeneration.edp)
-  > Fetch boundary vertice of meshes 
-  > Surface registration (use fold: deformetrica_script, implemented via deformatrica)
-  > Compute the mapping using RBF interpolation and save the data for FEM simulation
-  > Parametrize the geometry and compute reduced parameters of geometry
+  > 1) Generate samples for geometry variaty         
+  > 
+  > 2) Shape and mesh generation based on samples (use file: MeshGeneration.edp & ReferMeshGeneration.edp)
+  > 
+  > 3) Fetch boundary vertice of meshes 
+  > 
+  > 4) Surface registration (use fold: deformetrica_script, implemented via deformatrica)
+  > 
+  > 5)Compute the mapping using RBF interpolation and save the data for FEM simulation
+  > 
+  > 6)Parametrize the geometry and compute reduced parameters of geometry
 
 * `ReferNS.edp` is designed for performing finite-element simulations with various shapes of domains on a reference domain. This step generate the geometry-informed snapshots for ROM.
 
