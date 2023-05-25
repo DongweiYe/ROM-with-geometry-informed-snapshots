@@ -20,3 +20,5 @@ Each example consists of three main procedures: preprocessing, finite element si
 * `ReferNS.edp` is designed for performing finite-element simulations with various shapes of domains on a reference domain. This step generate the geometry-informed snapshots for ROM.
 
 * `ROM.py` collects the snapshots data and constructs the ROM based on POD+RBF interpolation. The script also shows the prediction error on validation and test dataset. The visualization results are saved in `data/error` directory in the form of .vtk. 
+
+Note that the surface registration and finite element is computational expensive. It might take long time
