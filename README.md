@@ -1,3 +1,4 @@
+![](https://github.com/DongweiYe/ROM-with-geometry-informed-snapshots/blob/main/github_figure.png)
 ### Non-intrusive reduced-order modeling with geometry-informed snapshots
 
 This code is associated to the publication of "[Data-driven reduced-order modelling for blood flow simulations with geometry-informed snapshots](https://arxiv.org/abs/2302.11006)". 
