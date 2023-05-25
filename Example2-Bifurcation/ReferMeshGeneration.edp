@@ -1,0 +1,35 @@
+load "msh3"
+load "iovtk"
+
+
+real angle=pi/6;
+real blength=8;
+real olength=2;
+real ilength=2;
+real l1 = 10;
+real l2 = blength*sin(angle);
+real l3 = blength*cos(angle);
+real l4 = olength*sin(angle);
+real l5 = olength*cos(angle);
+real l6 = ilength/2 + l2 - l5;
+real l7 = l6/tan(angle); 
+
+int n1 = 20; //mesh on o&ilength
+int n2 = (l1/olength)*n1; //mesh on main branch
+int n3 = (blength/olength)*n1; //mesh on branch
+
+border ba(t=0,1.0){x=t*l1;y=0;label=1;};
+border bb(t=0,1.0){x=l1+t*l3;y=-t*l2;label=2;};
+border bc(t=0,1.0){x=l1+l3+t*l4;y=-l2+t*l5;label=3;};
+border bd(t=0,1.0){x=l1+l3+l4-t*l7; y=-l2+l5+t*l6;label=4;};
+border be(t=0,1.0){x=l1+l3+l4-l7+t*l7;y=-l2+l5+l6+t*l6;label=5;};
+border bf(t=0,1.0){x=l1+l3+l4-t*l4; y=-l2+l5+l6+l6+t*l5;label=6;};
+border bg(t=0,1.0){x=l1+l3-t*l3;y=-l2+l5+l6+l6+l5-t*l2;label=7;};
+border bh(t=0,1.0){x=l1-t*l1;y=-l2+l5+l6+l6+l5-l2;label=8;};
+border bi(t=0,1.0){x=0;y=ilength-t*ilength;label=9;};
+
+mesh Th=buildmesh(ba(n2)+bb(n3)+bc(n1)+bd(n3)+be(n3)+bf(n1)+bg(n3)+bh(n2)+bi(n1));
+
+savemesh(Th, "data/reference/reference.msh");
+savevtk("data/reference/reference.vtk",Th);
+

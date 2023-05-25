@@ -1,0 +1,56 @@
+/////This file aim to read the discrete node value from high-fidelity data
+/////And save them to Error/Sample_X/Error.vtk
+load "iovtk"
+int[int] orderOut = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+/////Sample loop
+for (int SamNum=400;SamNum<500;SamNum++)
+{	
+	cout << "Processing sample" << SamNum << endl;
+	///// Read in the mesh
+	mesh Th = readmesh("data/SRmesh/"+SamNum+".msh");
+
+	// for (int Tstep=0;Tstep<20;Tstep++)
+	// {
+		fespace Uh(Th, P2);
+		fespace Vh(Th, P1);
+		Vh u, v, p,upred,vpred,ppred;
+
+		// ifstream ufile("../../Data/2DStenosis/RawResult/sample_"+SamNum+"/u_"+(1001+25*Tstep)+".txt");
+		// 	ufile >> u[];
+		///// Read in the velocity field files u(t)/v(t)/ssu(t)/ssv(t)
+		ifstream ufile("data/snapshots/sample_"+SamNum+"/u.txt");
+			ufile >> u[];
+		ifstream vfile("data/snapshots/sample_"+SamNum+"/v.txt");
+			vfile >> v[];
+		ifstream pfile("data/snapshots/sample_"+SamNum+"/p.txt");
+			pfile >> p[];
+
+
+
+		ifstream upredfile("data/error/sample_"+SamNum+"/upred.txt");
+			upredfile >> upred[];
+		ifstream vpredfile("data/error/sample_"+SamNum+"/vpred.txt");
+			vpredfile >> vpred[];
+		ifstream ppredfile("data/error/sample_"+SamNum+"/ppred.txt");
+			ppredfile >> ppred[];
+
+		// savevtk("../../Data/2DStenosis/Error/sample_"+SamNum+"/Error_"+tstep+".vtk",Th,vp1,vpred,vp1-vpred,dataname="vtru vpred verr");
+		savevtk("data/error/sample_"+SamNum+"/Error.vtk",Th,u,v,p,upred,vpred,ppred,u-upred,v-vpred,p-ppred,dataname="utru vtru ptru upred vpred ppred uerr verr perr",order=orderOut);
+
+
+	// }
+
+	///// Generate corresponding order of field
+	
+
+
+}
+
+
+
+
+
+
+	
+    

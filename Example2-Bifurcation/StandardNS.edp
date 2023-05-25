@@ -1,0 +1,91 @@
+load "iovtk"
+for(int sample = 450; sample<500; sample++){
+    
+    cout<<"Sample:"+sample<<endl;
+
+
+    mesh Th = readmesh("../../../MOR/Data/Bifurcation/MSHMesh/"+sample+".msh");
+    // Th = movemesh(Th, [x*0.01, y*0.01]);
+
+    real niu = 3.5*1e-3; // g mm^-1 s^-1
+    real rho = 1.06*1e-3; // g mm^-3
+    real nu = niu / rho;
+    real eps = 1e-6;
+
+    cout << "Number of Elements: " + Th.nt << endl;
+
+    fespace Uh(Th, [P2, P2]);
+    Uh [ux, uy], [vx, vy], [ux1, uy1], [dux, duy];
+
+    fespace Ph(Th, P1);
+    Ph p, q, dp;
+
+    macro Gradient(u) [dx(u), dy(u)] //
+    macro Divergence(ux, uy) (dx(ux) + dy(uy)) //
+    macro UgradV(ux,uy,vx,vy) [ [ux,uy]'*[dx(vx),dy(vx)] , [ux,uy]'*[dx(vy),dy(vy)] ]// EOM
+
+    // 1.268109790000000014
+    real umax = 1.268109790000000014 * 1e3 / (4 * pi);
+    real arrns = 1e-9;
+
+    macro ns()
+    {
+        int n;
+        real err=0;
+        S;
+    /* Newton Loop  */
+        for(n=0; n< 15; n++) 
+        {
+            LinNS;
+            dux[] = ux1[] - ux[];
+            duy[] = uy1[] - uy[];
+            err = sqrt(int2d(Th)(Gradient(dux)'*Gradient(dux)+Gradient(duy)'*Gradient(duy))) /
+                    sqrt(int2d(Th)(Gradient(ux)'*Gradient(ux) + Gradient(uy)'*Gradient(uy)));
+            ux[] = ux1[];
+            uy[] = uy1[];
+            cout << err << " / " << arrns << endl;
+            cout.flush;
+            if(err < arrns) break;
+        }
+            /* Newton loop has not converged */
+        if(err > arrns) 
+        {
+        cout << "NS Warning : non convergence : err = " << err << " / eps = " << arrns << endl;
+        }
+
+    } //EOF
+
+    //Function
+    func uIn = -umax*(y-1)^2+umax;
+
+    //Problem
+    problem S ([ux, uy, p],[vx, vy, q])
+        = int2d(Th)(nu * (Gradient(ux)' * Gradient(vx)
+            + Gradient(uy)' * Gradient(vy))
+            - p * Divergence(vx, vy)
+            - Divergence(ux, uy) * q)
+        + on(9, ux=uIn, uy=0.)
+        + on(1,2,4,5,7,8, ux=0., uy=0.);
+
+    problem LinNS([ux1,uy1,dp],[vx,vy,q]) =
+        int2d(Th)(nu*(Gradient(ux1)'*Gradient(vx)
+                +   Gradient(uy1)'*Gradient(vy))
+            + UgradV(ux1,uy1, ux, uy)'*[vx,vy]
+            + UgradV(ux,uy,ux1,uy1)'*[vx,vy]
+            - Divergence(ux1,uy1)*q - Divergence(vx,vy)*dp)
+        -int2d(Th)(UgradV(ux,uy, ux, uy)'*[vx,vy])
+        +on(9, ux1=uIn, uy1=0.)
+        +on(1,2,4,5,7,8, ux1=0.,uy1=0.);
+
+
+    ns;
+    //Plot
+    // plot(p , ps="pressure.ps", value=1, fill=1);
+    // plot([ux, uy], ps="velocity.ps", value=1, coef=.05);
+    
+}
+
+
+
+
+
