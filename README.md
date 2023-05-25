@@ -6,7 +6,7 @@ This repository present the implementation of two synthetic hemodynamics example
 
 The repository contains all the necessary information/data to reproduce the results. The detailed instructions are listed in the following section.
 
-## Perform ROM with geometry-informed snapshots
+### Perform ROM with geometry-informed snapshots
 Each example consists of three main procedures: preprocessing, finite element simulations and reduced-order modelling. Each steps corresponding to a .py/.edp file:
 * 'preprocess.py' contains following functions:
   1. Generate samples for geometry variaty         
