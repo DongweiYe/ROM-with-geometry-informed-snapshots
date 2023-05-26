@@ -4,7 +4,7 @@ for(int sample = 450; sample<500; sample++){
     cout<<"Sample:"+sample<<endl;
 
 
-    mesh Th = readmesh("../../../MOR/Data/Bifurcation/MSHMesh/"+sample+".msh");
+    mesh Th = readmesh("data/SRmesh/"+sample+".msh");
     // Th = movemesh(Th, [x*0.01, y*0.01]);
 
     real niu = 3.5*1e-3; // g mm^-1 s^-1
@@ -79,9 +79,13 @@ for(int sample = 450; sample<500; sample++){
 
 
     ns;
-    //Plot
-    // plot(p , ps="pressure.ps", value=1, fill=1);
-    // plot([ux, uy], ps="velocity.ps", value=1, coef=.05);
+    
+    ofstream uxfile("data/snapshots/sample_"+sample+"/u_ori.txt");
+    uxfile << ux[] << endl;
+    ofstream uyfile("data/snapshots/sample_"+sample+"/v_ori.txt");
+    uyfile << uy[] << endl;
+    ofstream pfile("data/snapshots/sample_"+sample+"/p_ori.txt");
+    pfile << p[] << endl;
     
 }
 

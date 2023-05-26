@@ -29,8 +29,7 @@ def extract_vertices(directory_to_txt):
             coordinates = currentline.strip().split()
 
             for j in range(len(coordinates)):
-            	VerticeList.append(np.float64(coordinates[j]))           
-
+                VerticeList.append(np.float64(coordinates[j]))
     return np.expand_dims(np.asarray(VerticeList),axis=1)
 
 
@@ -46,7 +45,7 @@ def vertices_num(directory_to_txt):
 
 
 def check_num_snapshot(Attri,directory_to_data,num_snapshot,num_rep):
-    SnapshotMatrix = np.load(directory_to_data+"/PODdata/POD"+Attri+".npy")
+    SnapshotMatrix = np.load(directory_to_data+"/ROM/POD"+Attri+".npy")
     NumSample = SnapshotMatrix.shape[1]
     TrainRatio = 0.8
     NumTrain = int(NumSample*TrainRatio)
@@ -96,7 +95,7 @@ def check_num_snapshot(Attri,directory_to_data,num_snapshot,num_rep):
 
 
 def SVD(Attri,NumComponent,TrainRatio,directory_to_data,save_data):
-    SnapshotMatrix = np.load(directory_to_data+"/PODdata/POD"+Attri+".npy")
+    SnapshotMatrix = np.load(directory_to_data+"/ROM/POD"+Attri+".npy")
     NumSample = SnapshotMatrix.shape[1]
     TrainRatio = 0.8
     NumTrain = int(NumSample*TrainRatio)
@@ -133,19 +132,19 @@ def SVD(Attri,NumComponent,TrainRatio,directory_to_data,save_data):
 
 
     ### Transform the data(output) to NN training type 
-    NNoutput = np.vstack((Alpha,AlphaTest))
-    print('Training output of '+Attri+' shape: ',NNoutput.shape,'\n')
+    ReducedCoef = np.vstack((Alpha,AlphaTest))
+    print('Training output of '+Attri+' shape: ',ReducedCoef.shape,'\n')
 
     if save_data == True:
-        np.save(directory_to_data+'/PODdata/NNOutput_'+Attri+'.npy',NNoutput)
-        np.save(directory_to_data+'/PODdata/Components_'+Attri+'.npy',pca.components_)
-        np.save(directory_to_data+'/PODdata/Mean_'+Attri+'.npy',Mean)
+        np.save(directory_to_data+'/ROM/ReducedFlow_'+Attri+'.npy',ReducedCoef)
+        np.save(directory_to_data+'/ROM/Components_'+Attri+'.npy',pca.components_)
+        np.save(directory_to_data+'/ROM/Mean_'+Attri+'.npy',Mean)
     
 
 def RBFI_function(Attri,directory_to_data,save_data):
     ### Load the data input&output
-    InputCP = np.load(directory_to_data+'/PODdata/NNInput_CP.npy')
-    Output = np.load(directory_to_data+'/PODdata/NNOutput_'+Attri+'.npy')
+    InputCP = np.load(directory_to_data+'/ROM/Reduced_GeoPara.npy')
+    Output = np.load(directory_to_data+'/ROM/ReducedFlow_'+Attri+'.npy')
 
     print('Size of input CP:', InputCP.shape)
     print('Size of output '+Attri+' :',Output.shape)
@@ -180,16 +179,16 @@ def RBFI_function(Attri,directory_to_data,save_data):
 
     ### save data
     if save_data == True:
-        np.save('../../Data/'+example+'/PODdata/pred_reduced_coef_'+Attri+'.npy',prediction)
+        np.save('data/ROM/pred_reduced_coef_'+Attri+'.npy',prediction)
 
 
 def coef_to_field(Attri,directory_to_data):
 
     ### Load prediction, pca components, and means
-    alpha = np.load(directory_to_data+'/PODdata/pred_reduced_coef_'+Attri+'.npy')
-    pca_components = np.load(directory_to_data+'/PODdata/Components_'+Attri+'.npy')
-    mean = np.load(directory_to_data+'/PODdata/Mean_'+Attri+'.npy')
-    groundtruth = np.load(directory_to_data+"/PODdata/POD"+Attri+".npy")
+    alpha = np.load(directory_to_data+'/ROM/pred_reduced_coef_'+Attri+'.npy')
+    pca_components = np.load(directory_to_data+'/ROM/Components_'+Attri+'.npy')
+    mean = np.load(directory_to_data+'/ROM/Mean_'+Attri+'.npy')
+    groundtruth = np.load(directory_to_data+"/ROM/POD"+Attri+".npy")
 
     ### Set test/validation cases
     StartNumTest = 400
@@ -209,11 +208,16 @@ def coef_to_field(Attri,directory_to_data):
 
     ### format the data into FreeFem txt form
     vertice = Prediction.shape[0]
+    try:
+        os.mkdir(directory_to_data+'/error/')
+    except:
+        print('Sth went wrong, please check')
+
     for i in range(400,500):
     	# print('Processing sample ',str(i),':')
     	### Create a error directory
         try:
-            os.mkdir(directory_to_data+'/Error/sample_'+str(i))
+            os.mkdir(directory_to_data+'/error/sample_'+str(i))
         except:
             pass
     	## Save a Freefem readable file
@@ -225,7 +229,7 @@ def coef_to_field(Attri,directory_to_data):
                 AllString = AllString+"\t"+str(Prediction[k-1,i-400])
         
         AllString = AllString+"\t"
-        text_file = open(directory_to_data+"/Error/sample_"+str(i)+'/'+Attri+'pred.txt', "w")
+        text_file = open(directory_to_data+"/error/sample_"+str(i)+'/'+Attri+'pred.txt', "w")
         text_file.write(AllString)
         text_file.close()
     print('Transformation to Freefem txt for ',Attri,' is done')
@@ -237,16 +241,14 @@ def compute_l2_error(target,reference):
 ###############################################
 ##############   Main ROM process #############
 ###############################################
-example = '2DStenosis'
-
 
 ### Collecting the data generated from FreeFem
 ### Snapshot data directory
 
-raw_data_directory = '../../../MOR/Data/'+example
+raw_data_directory = 'data/snapshots'
 
 ### Read number of vertice and create emtpy matrix for data storage
-v_num = vertices_num(raw_data_directory+'/RawResult/sample_0/u.txt')
+v_num = vertices_num(raw_data_directory+'/sample_0/u.txt')
 # print(v_num)
 ulist = np.empty((v_num,0))
 vlist = np.empty((v_num,0))
@@ -255,45 +257,43 @@ plist = np.empty((v_num,0))
 ### Collect all the snapshots  
 for sample in range(500):
 	print('Processing sample:',sample)
-	u = extract_vertices(raw_data_directory+'/RawResult/sample_'+str(sample)+'/u.txt')
-	v = extract_vertices(raw_data_directory+'/RawResult/sample_'+str(sample)+'/v.txt')
-	p = extract_vertices(raw_data_directory+'/RawResult/sample_'+str(sample)+'/p.txt')
+	u = extract_vertices(raw_data_directory+'/sample_'+str(sample)+'/u.txt')
+	v = extract_vertices(raw_data_directory+'/sample_'+str(sample)+'/v.txt')
+	p = extract_vertices(raw_data_directory+'/sample_'+str(sample)+'/p.txt')
 
 	ulist = np.hstack((ulist,u))
 	vlist = np.hstack((vlist,v))
 	plist = np.hstack((plist,p))
 
 ### Save snapshot matrix (v_num,num_sample)
-np.save('../../Data/'+example+'/PODdata/PODu.npy',ulist)
-np.save('../../Data/'+example+'/PODdata/PODv.npy',vlist)
-np.save('../../Data/'+example+'/PODdata/PODp.npy',plist)
+np.save('data/ROM/PODu.npy',ulist)
+np.save('data/ROM/PODv.npy',vlist)
+np.save('data/ROM/PODp.npy',plist)
 print('Snapshot matrix shape: ', ulist.shape)
 
 
 ## Compute the error of decompsition of different size of snapshot matrix
-for i in range(50,400,50):
-    print('Snapshot: ',i)
-    mean,std = check_num_snapshot('v','../../Data/'+example,i,20)
-    print(mean,std)
-
-
+# for i in range(50,400,50):
+#     print('Snapshot: ',i)
+#     mean,std = check_num_snapshot('v','data',i,20)
+#     print(mean,std)
 
 
 ### Apply PCA to extract the reduced basis and reduced coefficients.
-### Define setting for  steady, u->27, v->28, p->19
-SVD('u',27,0.8,'../../Data/'+example,save_data=False)
-SVD('v',28,0.8,'../../Data/'+example,save_data=False)
-SVD('p',19,0.8,'../../Data/'+example,save_data=False)
+### Define setting for  steady, u->17, v->21, p->8
+SVD('u',17,0.8,'data',save_data=True)
+SVD('v',21,0.8,'data',save_data=True)
+SVD('p',8,0.8,'data',save_data=True)
 
 ### RBFI interpolation
-RBFI_function('u','../../Data/'+example,save_data=True)
-RBFI_function('v','../../Data/'+example,save_data=True)
-RBFI_function('p','../../Data/'+example,save_data=True)
+RBFI_function('u','data',save_data=True)
+RBFI_function('v','data',save_data=True)
+RBFI_function('p','data',save_data=True)
 
 ### Recover the reduced coefficient back to the variable fields
-coef_to_field('u','../../Data/'+example)
-coef_to_field('v','../../Data/'+example)
-coef_to_field('p','../../Data/'+example)
+coef_to_field('u','data')
+coef_to_field('v','data')
+coef_to_field('p','data')
 
 ## Execute Freefem to create a complete vtk file for paraview visualization
 os.system("FreeFem++ Visualization.edp -v 0")
