@@ -5,7 +5,7 @@ This repository is associated to the publication of "[Data-driven reduced-order 
 
 This repository presents the implementation of two synthetic hemodynamics examples, stenosis and bifurcation in 2D. The implementation of the finite element simulation is based on open source [FreeFEM](https://freefem.org/) and the surface registration is acheived by shape analysis software [deformatrica](https://www.deformetrica.org/). The non-instruive reduced order models are constructed with proper orthogonal decomposition (POD) with radial basis function (RBF) interpolation.
 
-The repository contains all the necessary information/data to reproduce the results. The detailed instructions are listed in the following section.
+The repository contains all the necessary information/data to reproduce the results. The detailed instructions are listed in the following section. But best environment would be python 3.7 because that is the latest supported version of deformetrica and you may need manually drop out the unnecessary `.decode('utf-8')` in `/your-directory-to-package/python3.7/site-packages/deformetrica/core/estimators/scipy_optimize.py`.
 
 ### Perform ROM with geometry-informed snapshots
 Each example consists of three main procedures: preprocessing, finite element simulations and reduced-order modelling. Each steps corresponding to a .py/.edp file:
