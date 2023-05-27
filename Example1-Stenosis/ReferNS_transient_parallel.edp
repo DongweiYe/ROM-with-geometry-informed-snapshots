@@ -1,0 +1,261 @@
+load "PETSc"
+macro dimension()2//
+include "macro_ddm.idp"
+
+
+for(int sample = 0; sample<500; sample++){
+    cout<<"Sample:"+sample<<endl;
+
+    /////// Import weights for each CP
+    real[int] weights(726);
+    ifstream wfile("data/mapping/sample_"+sample+"/weights.txt");
+    for (int iii = 0; iii < 726; iii++){
+        wfile >> weights[iii];
+    }
+
+    /////// Import CPs 
+    real[int] cps(720);
+    ifstream cpfile("data/mapping/control.txt");
+    for (int iii = 0; iii < 720; iii++){
+        cpfile >> cps[iii];
+    }
+
+
+    //////// Define a transformation function T
+    func real[int] funcT (real[int] Weight,real[int] CP,int Num){
+        real[int] xdis(Num),ydis(Num),dis(Num),kernel(Num),pred(2);
+        real xpre,ypre;
+        for(int numcp = 0; numcp<Num; numcp++){
+            xdis[numcp] = x - CP[numcp];
+            ydis[numcp] = y - CP[numcp+Num];
+
+            dis[numcp] = sqrt(xdis[numcp]^2 + ydis[numcp]^2);
+            // kernel[numcp] = dis[numcp]^2 * log(dis[numcp]);
+            kernel[numcp] = dis[numcp]^3;
+        }
+        real shiftx=10;
+        real shifty=1;
+        real scalex=10;
+        real scaley=1;
+        real ScaledX = (x-shiftx)/scalex;
+        real ScaledY = (y-shifty)/scaley;
+
+        xpre=0;
+        ypre=0;
+        for(int numcp = 0; numcp<Num; numcp++){
+            xpre = xpre + kernel[numcp]*Weight[numcp];
+            ypre = ypre + kernel[numcp]*Weight[numcp+(Num+3)];
+        }
+        pred[0] = xpre+Weight[Num]+ScaledX*Weight[Num+1]+ScaledY*Weight[Num+2];
+        pred[1] = ypre+Weight[2*Num+3]+ScaledX*Weight[2*Num+4]+ScaledY*Weight[2*Num+5];
+        return pred;
+    }
+
+
+
+    //////// Define Macro
+    macro F11(u1, u2) (dx(u1)) //
+    macro F12(u1, u2) (dy(u1)) //
+    macro F21(u1, u2) (dx(u2)) //
+    macro F22(u1, u2) (dy(u2)) //
+
+    //  Macro for the determinant of the deformation gradient
+    macro JF(u1, u2) (
+    F11(u1, u2)*F22(u1, u2) - F12(u1, u2)*F21(u1, u2)
+    ) //
+
+    //  Macros for the inverse of the deformation gradient
+    macro Finv11 (u1, u2) (
+    F22(u1, u2) / JF(u1, u2)
+    ) //
+    macro Finv22 (u1, u2) (
+    F11(u1, u2) / JF(u1, u2)
+    ) //
+    macro Finv12 (u1, u2) (
+    -F12(u1, u2) / JF(u1, u2)
+    ) //
+    macro Finv21 (u1, u2) (
+    -F21(u1, u2) / JF(u1, u2)
+    ) //
+
+
+
+
+
+    mesh Mesh = readmesh("data/reference/reference.msh");
+    mesh MeshBackup = readmesh("data/reference/reference.msh");
+
+    real dt = 0.002;
+    real t = 0;
+    real T = 0.3; // (s)
+    int tstep = 0;
+    int saveEach = 10;
+    int[int] orderOut = [1, 1, 1, 1];
+
+    real umax = 2.51327412286999996*1e3 / (4 * pi); //mm/s
+    real niu = 3.5*1e-3; // g mm^-1 s^-1
+    real rho = 1.06*1e-3; // g mm^-3
+    real nu = niu / rho;
+
+
+
+    // fespace Uh(Th, P2);
+    // fespace Vh(Th, P1);
+    // Uh u, v, uh, vh, uold, vold, du, dv;
+    // Vh p, ph, dp, pold;
+
+    if (mpirank == 0)
+      cout << "Number of Elements: " + Mesh.nt << endl;
+
+    func PkVector = [P2, P2, P1];
+
+    int[int] myN2O;
+    macro MeshN2O() myN2O//
+
+    buildDmesh(Mesh);
+    Mat J;
+
+    {
+      macro def(i)[i, i#B, i#C]//
+      macro init(i)[i, i, i]//
+      createMat(Mesh, J, PkVector)
+    }
+
+    fespace SpaceVector(Mesh, PkVector);
+    fespace Uh(Mesh,P2);
+
+    SpaceVector [ucx, ucy, pc] = [-umax*(y-1)^2+umax, 0, 0];
+    SpaceVector [uckx, ucky, pck];
+    SpaceVector [ucxold, ucyold, pcold];
+    cout << "Faaa" << endl;
+    Uh FX = funcT(weights,cps,int(cps.n/2))[0];
+    cout << "Faaa" << endl;
+    Uh FY = funcT(weights,cps,int(cps.n/2))[1];
+
+
+    if (mpirank == 0)
+      cout << "Finite Element DOF (in each partition): " + SpaceVector.ndof << endl;
+
+
+    varf vRes([ux, uy, p], [vx, vy, q]) = int2d(Mesh)(
+        (uckx*vx+ucky*vy)/dt*JF(FX,FY) - (ucxold*vx+ucyold*vy)/dt*JF(FX,FY) 
+        + JF(FX,FY)*nu*((dx(ucx)*Finv11(FX,FY)+dy(ucx)*Finv21(FX,FY))*(dx(vx)*Finv11(FX,FY)+dy(vx)*Finv21(FX,FY))
+                        +(dx(ucx)*Finv12(FX,FY)+dy(ucx)*Finv22(FX,FY))*(dx(vx)*Finv12(FX,FY)+dy(vx)*Finv22(FX,FY)) 
+                        +(dx(ucy)*Finv11(FX,FY)+dy(ucy)*Finv21(FX,FY))*(dx(vy)*Finv11(FX,FY)+dy(vy)*Finv21(FX,FY))
+                        +(dx(ucy)*Finv12(FX,FY)+dy(ucy)*Finv22(FX,FY))*(dx(vy)*Finv12(FX,FY)+dy(vy)*Finv22(FX,FY)))
+
+        + JF(FX,FY)*vx*(ucx*(dx(ucx)*Finv11(FX,FY)+dy(ucx)*Finv21(FX,FY))+ucy*(dx(ucx)*Finv12(FX,FY)+dy(ucx)*Finv22(FX,FY))) 
+        + JF(FX,FY)*vy*(ucx*(dx(ucy)*Finv11(FX,FY)+dy(ucy)*Finv21(FX,FY))+ucy*(dx(ucy)*Finv12(FX,FY)+dy(ucy)*Finv22(FX,FY)))
+
+        - JF(FX,FY)/rho*pc*((dx(vx)*Finv11(FX,FY)+dy(vx)*Finv21(FX,FY))+(dx(vy)*Finv12(FX,FY)+dy(vy)*Finv22(FX,FY))) 
+        - JF(FX,FY)*q*((dx(ucx)*Finv11(FX,FY)+dy(ucx)*Finv21(FX,FY))+(dx(ucy)*Finv12(FX,FY)+dy(ucy)*Finv22(FX,FY))))
+
+        +on(1,3,ux = ucx-0, uy = ucy-0)
+        +on(4, ux = ucx-(-ulist[(tstep-1)%500]*(y-1)^2+ulist[(tstep-1)%500])* 1e3 / (4 * pi), uy = 0);
+
+    varf vJ([ux, uy, p], [vx, vy, q]) = int2d(Mesh)(
+        (ux*vx+uy*vy)/dt*JF(FX,FY)
+
+        + JF(FX,FY)*vx*(ucx*(dx(ux)*Finv11(FX,FY)+dy(ux)*Finv21(FX,FY))
+                            +ux*(dx(ucx)*Finv11(FX,FY)+dy(ucx)*Finv21(FX,FY))
+                            +ucy*(dx(ux)*Finv12(FX,FY)+dy(ux)*Finv22(FX,FY))
+                            +uy*(dx(ucx)*Finv12(FX,FY)+dy(ucx)*Finv22(FX,FY))) 
+        + JF(FX,FY)*vy*(ucx*(dx(uy)*Finv11(FX,FY)+dy(uy)*Finv21(FX,FY))
+                            +ux*(dx(ucy)*Finv11(FX,FY)+dy(ucy)*Finv21(FX,FY))
+                            +ucy*(dx(uy)*Finv12(FX,FY)+dy(uy)*Finv22(FX,FY))
+                            +uy*(dx(ucy)*Finv12(FX,FY)+dy(ucy)*Finv22(FX,FY)))
+
+        + JF(FX,FY)*nu*((dx(ux)*Finv11(FX,FY)+dy(ux)*Finv21(FX,FY))*(dx(vx)*Finv11(FX,FY)+dy(vx)*Finv21(FX,FY))
+                        +(dx(ux)*Finv12(FX,FY)+dy(ux)*Finv22(FX,FY))*(dx(vx)*Finv12(FX,FY)+dy(vx)*Finv22(FX,FY))
+                        +(dx(uy)*Finv11(FX,FY)+dy(uy)*Finv21(FX,FY))*(dx(vy)*Finv11(FX,FY)+dy(vy)*Finv21(FX,FY))
+                        +(dx(uy)*Finv12(FX,FY)+dy(uy)*Finv22(FX,FY))*(dx(vy)*Finv12(FX,FY)+dy(vy)*Finv22(FX,FY)))
+
+        - JF(FX,FY)/rho*p*((dx(vx)*Finv11(FX,FY)+dy(vx)*Finv21(FX,FY))+(dx(vy)*Finv12(FX,FY)+dy(vy)*Finv22(FX,FY))) 
+        - JF(FX,FY)*q*((dx(ux)*Finv11(FX,FY)+dy(ux)*Finv21(FX,FY))+(dx(uy)*Finv12(FX,FY)+dy(uy)*Finv22(FX,FY))))
+        
+
+        + on(1,3, ux = ucx-0, uy = ucy-0)
+        + on(4, ux = ucx-(-ulist[(tstep-1)%500]*(y-1)^2+ulist[(tstep-1)%500])* 1e3 / (4 * pi) , uy = 0);
+
+    set(J, sparams = "-pc_type lu");
+
+
+
+    func real[int] funcRes(real[int]& inPETSc) {
+        ChangeNumbering(J, ucx[], inPETSc, inverse = true, exchange = true);
+        [uckx, ucky, pck]=[ucx, ucy, pc];
+        real[int] out(SpaceVector.ndof);
+        out = vRes(0, SpaceVector, tgv = -1);
+        ChangeNumbering(J, out, inPETSc);
+        return inPETSc;
+    }
+
+    func int funcJ(real[int]& inPETSc) {
+        ChangeNumbering(J, ucx[], inPETSc, inverse = true, exchange = true);
+        J = vJ(SpaceVector, SpaceVector, tgv = -1);
+        return 0;
+    }
+
+
+    // Save to global solution
+    fespace SpaceVectorGlobal(MeshBackup, PkVector);
+    int[int] rst = restrict(SpaceVector, SpaceVectorGlobal, myN2O);
+    SpaceVectorGlobal [globux, globuy, globp], [sumux, sumuy, sump]; 
+    SpaceVector [uxTemp, uyTemp, pTemp];
+    fespace SpaceP1Global(MeshBackup, P1);
+    SpaceP1Global uxi, uyi, pi;
+
+
+    for (t=0.0; t<=T; t+=dt) {
+        tstep += 1;
+
+        if (mpirank == 0)
+            cout << "time step: " << tstep << endl;
+
+        [uckx, ucky, pck] = [ucx, ucy, pc];
+
+        real[int] xPETSc;
+        ChangeNumbering(J, ucx[], xPETSc);
+        SNESSolve(J, funcJ, funcRes, xPETSc, sparams = "-snes_monitor ");
+        ChangeNumbering(J, ucx[], xPETSc, inverse = true, exchange = true);
+        
+        [ucxold, ucyold, pcold]=[ucx, ucy, pc];
+        
+    }
+    // savevtk("result/output.vtu", Mesh, ucx, ucy, pc, dataname="u v p", order=orderOut,
+    //         append = t ? true : false);
+
+    globux[] = 0;
+    globuy[] = 0;
+    globp[] = 0;
+
+    [uxTemp, uyTemp, pTemp] = [ucx, ucy, pc];
+
+    uxTemp[] .*= J.D;
+    uyTemp[] .*= J.D;
+    pTemp[] .*= J.D;
+
+    for[i, v : rst] globux[][v] = uxTemp[][i];
+    for[i, v : rst] globuy[][v] = uyTemp[][i];
+    for[i, v : rst] globp[][v] = pTemp[][i];
+
+    mpiAllReduce(globux[], sumux[], mpiCommWorld, mpiSUM);
+    mpiAllReduce(globuy[], sumuy[], mpiCommWorld, mpiSUM);
+    mpiAllReduce(globp[], sump[], mpiCommWorld, mpiSUM);
+
+    uxi = sumux;
+    uyi = sumuy;
+    pi = sump;
+
+    
+    if(mpirank == 0){
+        ofstream uxfile("data/snapshots/sample_"+sample+"/u.txt");
+        uxfile << uxi[] << endl;
+        ofstream uyfile("data/snapshots/sample_"+sample+"/v.txt");
+        uyfile << uyi[] << endl;
+        ofstream pfile("data/snapshots/sample_"+sample+"/p.txt");
+        pfile << pi[] << endl;
+    }
+
+
+}

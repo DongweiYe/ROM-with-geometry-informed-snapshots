@@ -16,8 +16,6 @@ for (int SamNum=400;SamNum<500;SamNum++)
 		fespace Vh(Th, P1);
 		Vh u, v, p,upred,vpred,ppred;
 
-		// ifstream ufile("../../Data/2DStenosis/RawResult/sample_"+SamNum+"/u_"+(1001+25*Tstep)+".txt");
-		// 	ufile >> u[];
 		///// Read in the velocity field files u(t)/v(t)/ssu(t)/ssv(t)
 		ifstream ufile("data/snapshots/sample_"+SamNum+"/u.txt");
 			ufile >> u[];
