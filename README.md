@@ -20,7 +20,7 @@ Each example consists of three main procedures: preprocessing, finite element si
 * We proviode three .edp here:
   - `ReferNS.edp` is designed for performing finite-element simulations (steady-state) with various shapes of domains on a reference domain. This step generate the geometry-informed snapshots for ROM.
   - `ReferNS_transient_parallel.edp` is designed for performing finite-element simulations (transient) with various shapes of domains on a reference domain (paralleled with PETSc). This step generate the geometry-informed snapshots for ROM.
-  - `Standard.edp` is standard finite-element simulations for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
+  - `StandardNS.edp` is standard finite-element simulations for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
 
 * `ROM.py` collects the snapshots data and constructs the ROM based on POD+RBF interpolation. The script also shows the prediction error on validation and test dataset. The visualization results are saved in `data/error` directory in the form of .vtk. 
 
