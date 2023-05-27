@@ -9,7 +9,7 @@ The repository contains all the necessary information/data to reproduce the resu
 
 ### Perform ROM with geometry-informed snapshots
 Each example consists of three main procedures: preprocessing, finite element simulations and reduced-order modelling. Each steps corresponding to a .py/.edp file:
-* `preprocess.py` contains following functions:
+* `preprocess.py` contains following functions (Example 2 is slightly different, check the comments in corresponding file for details):
   - Generate samples for geometry variaty         
   - Shape and mesh generation based on samples (use file: MeshGeneration.edp & ReferMeshGeneration.edp)
   - Fetch boundary vertice of meshes 
@@ -17,7 +17,10 @@ Each example consists of three main procedures: preprocessing, finite element si
   - Compute the mapping using RBF interpolation and save the data for FEM simulation
   - Parametrize the geometry and compute reduced parameters of geometry
 
-* `ReferNS.edp` is designed for performing finite-element simulations with various shapes of domains on a reference domain. This step generate the geometry-informed snapshots for ROM.
+* We proviode three .edp here:
+  - `ReferNS.edp` is designed for performing finite-element simulations (steady-state) with various shapes of domains on a reference domain. This step generate the geometry-informed snapshots for ROM.
+  - `ReferNS_transient_parallel.edp` is designed for performing finite-element simulations (transient) with various shapes of domains on a reference domain (paralleled with PETSc). This step generate the geometry-informed snapshots for ROM.
+  - `StandardNS.edp` is standard finite-element simulations for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
 
 * `ROM.py` collects the snapshots data and constructs the ROM based on POD+RBF interpolation. The script also shows the prediction error on validation and test dataset. The visualization results are saved in `data/error` directory in the form of .vtk. 
 
