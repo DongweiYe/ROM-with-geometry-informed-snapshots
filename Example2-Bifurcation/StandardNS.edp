@@ -14,8 +14,9 @@ for(int sample = 450; sample<500; sample++){
 
     cout << "Number of Elements: " + Th.nt << endl;
 
-    fespace Uh(Th, [P2, P2]);
-    Uh [ux, uy], [vx, vy], [ux1, uy1], [dux, duy];
+    fespace Uh(Th, P2);
+    Uh ux,uy,vx,vy,ux1,uy1,dux,duy;
+    // Uh [ux, uy], [vx, vy], [ux1, uy1], [dux, duy];
 
     fespace Ph(Th, P1);
     Ph p, q, dp;
