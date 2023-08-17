@@ -165,15 +165,9 @@ for(int sample = 0; sample<100; sample++){
             }
     } //EOF
     ns;
-    // plot(pc, ps="pressure.ps", value=1, fill=1);
-    // plot([ucx, ucy], ps="velocity.ps", value=1, coef=.05);
-    ofstream uxfile("data/snapshots/sample_"+sample+"/u.txt");
-    uxfile << ux[] << endl;
-    ofstream uyfile("data/snapshots/sample_"+sample+"/v.txt");
-    uyfile << uy[] << endl;
-    ofstream pfile("data/snapshots/sample_"+sample+"/p.txt");
-    pfile << p[] << endl;
 
-
+    // Vectorial [ux,uy,p] savev the data together
+    // ofstream uxfile("data/snapshots/sample_"+sample+"/uvp.txt");
+    // uxfile << ux[] << endl;
 
 }
