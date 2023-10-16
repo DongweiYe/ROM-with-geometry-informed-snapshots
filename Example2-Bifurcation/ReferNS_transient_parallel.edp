@@ -86,7 +86,7 @@ for(int sample = 0; sample<500; sample++){
     mesh Mesh = readmesh("data/reference/reference.msh");
     mesh MeshBackup = readmesh("data/reference/reference.msh");
 
-    real dt = 1e-4;
+    real dt = 1e-3;
     real t = 0;
     real T = 1.5e-1; // (s)
     int tstep = 0;
