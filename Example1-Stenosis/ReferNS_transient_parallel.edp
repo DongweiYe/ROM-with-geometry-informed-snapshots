@@ -151,7 +151,7 @@ for(int sample = 0; sample<500; sample++){
         - JF(FX,FY)*q*((dx(ucx)*Finv11(FX,FY)+dy(ucx)*Finv21(FX,FY))+(dx(ucy)*Finv12(FX,FY)+dy(ucy)*Finv22(FX,FY))))
 
         +on(1,3,ux = ucx-0, uy = ucy-0)
-        +on(4, ux = ucx-(-ulist[(tstep-1)%500]*(y-1)^2+ulist[(tstep-1)%500])* 1e3 / (4 * pi), uy = 0);
+        +on(4, ux = 0, uy = 0);
 
     varf vJ([ux, uy, p], [vx, vy, q]) = int2d(Mesh)(
         (ux*vx+uy*vy)/dt*JF(FX,FY)
@@ -175,7 +175,7 @@ for(int sample = 0; sample<500; sample++){
         
 
         + on(1,3, ux = ucx-0, uy = ucy-0)
-        + on(4, ux = ucx-(-ulist[(tstep-1)%500]*(y-1)^2+ulist[(tstep-1)%500])* 1e3 / (4 * pi) , uy = 0);
+        + on(4, ux = 0 , uy = 0);
 
     set(J, sparams = "-pc_type lu");
 
