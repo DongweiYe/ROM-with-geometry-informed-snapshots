@@ -18,11 +18,11 @@ Each example consists of three main procedures: preprocessing, finite element si
   - Parametrize the geometry and compute reduced parameters of geometry
 
 * We provide three .edp here:
-  - `ReferNS_transient_parallel.edp` is designed for performing finite-element simulations (transient) with various shapes of domains on a reference domain (paralleled with PETSc). This step generates the geometry-informed snapshots for ROM.
+  - `ReferNS_steady_parallel.edp` is designed for performing finite-element simulations (steady) with various shapes of domains on a reference domain (paralleled with PETSc). This step generates the geometry-informed snapshots for ROM (recommend to use). 
     Implement with `ff-mpirun -np 16 ReferNS_transient_parallel.edp -v 0` where 16 stands for the number of cores for mpi.
+  - `ReferNS_transient_parallel.edp` is the transient version. It takes much more time to generate a steady solution, but can be used for time-dependent problems.
   - `StandardNS.edp` is the standard finite-element simulation for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
-  - `ReferNS.edp` is designed for performing finite-element simulations (steady-state) with various shapes of domains on a reference domain. This step generates the geometry-informed snapshots for ROM (currently out-of-date, not using).
 
 * `ROM.py` collects the snapshots data and constructs the ROM based on POD+RBF interpolation. The script also shows the prediction error on the validation and test dataset. The visualization results are saved in `data/error` directory in the form of .vtk. 
 
-Note that surface registration and finite element are computationally expensive. It might take a long time
+Note that surface registration and finite elements are computationally expensive. It might take a long time
