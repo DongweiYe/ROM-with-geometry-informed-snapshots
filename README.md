@@ -19,7 +19,7 @@ Each example consists of three main procedures: preprocessing, finite element si
 
 * We provide three .edp here:
   - `ReferNS_steady_parallel.edp` is designed for performing finite-element simulations (steady) with various shapes of domains on a reference domain (paralleled with PETSc). This step generates the geometry-informed snapshots for ROM (recommend to use). 
-    Implement with `ff-mpirun -np 16 ReferNS_transient_parallel.edp -v 0` where 16 stands for the number of cores for mpi.
+    Implement with `ff-mpirun -np 16 ReferNS_steady_parallel.edp -v 0` where 16 stands for the number of cores for mpi.
   - `ReferNS_transient_parallel.edp` is the transient version. It takes much more time to generate a steady solution, but can be used for time-dependent problems.
   - `StandardNS.edp` is the standard finite-element simulation for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
 
