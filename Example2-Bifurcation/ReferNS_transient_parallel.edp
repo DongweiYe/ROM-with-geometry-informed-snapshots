@@ -86,9 +86,9 @@ for(int sample = 0; sample<500; sample++){
     mesh Mesh = readmesh("data/reference/reference.msh");
     mesh MeshBackup = readmesh("data/reference/reference.msh");
 
-    real dt = 1e-3;
+    real dt = 5e-4;
     real t = 0;
-    real T = 1.5e-1; // (s)
+    real T = 5.0e-1; // (s)
     int tstep = 0;
     
     int[int] orderOut = [1, 1, 1, 1];
@@ -125,6 +125,8 @@ for(int sample = 0; sample<500; sample++){
 
     fespace SpaceVector(Mesh, PkVector);
     fespace Uh(Mesh,P2);
+
+    Uh umagdelta, umagsquare;
 
     SpaceVector [ucx, ucy, pc] = [-umax*(y-1)^2+umax, 0, 0];
     SpaceVector [uckx, ucky, pck];
@@ -218,6 +220,19 @@ for(int sample = 0; sample<500; sample++){
         ChangeNumbering(J, ucx[], xPETSc);
         SNESSolve(J, funcJ, funcRes, xPETSc, sparams = "-snes_monitor ");
         ChangeNumbering(J, ucx[], xPETSc, inverse = true, exchange = true);
+
+        umagsquare = ucx^2+ucy^2;
+        umagdelta = (sqrt(ucx^2+ucy^2) - sqrt(ucxold^2+ucyold^2))^2;
+        real err = sqrt(umagdelta[].sum)/sqrt(umagsquare[].sum);
+
+        // Find the maximum error on all mpirank
+        real finalerr;
+        mpiAllReduce(err, finalerr, mpiCommWorld, mpiMAX);
+
+        if(mpirank == 0)
+            cout<<"Final error: "<<finalerr<<endl;
+
+        if(finalerr<1e-3) break;
         
         [ucxold, ucyold, pcold]=[ucx, ucy, pc];
 
