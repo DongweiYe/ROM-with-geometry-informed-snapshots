@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10029572.svg)](https://doi.org/10.5281/zenodo.10029572)
 ![](https://github.com/DongweiYe/ROM-with-geometry-informed-snapshots/blob/main/github_figure.png)
 ### Non-intrusive reduced-order modelling with geometry-informed snapshots
 
