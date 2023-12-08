@@ -14,12 +14,12 @@ Each example consists of three main procedures: preprocessing, finite element si
   - Generate samples for geometry variety         
   - Shape and mesh generation based on samples (use file: MeshGeneration.edp & ReferMeshGeneration.edp)
   - Fetch boundary vertice of meshes 
-  - Surface registration (use fold: deformetrica_script, implemented via deformatrica)
+  - Surface registration (use folder: deformetrica_script, implemented via deformatrica)
   - Compute the mapping using RBF interpolation and save the data for FEM simulation
   - Parametrize the geometry and compute reduced parameters of geometry
 
 * We provide three .edp here:
-  - `ReferNS_steady_parallel.edp` is designed for performing finite-element simulations (steady) with various shapes of domains on a reference domain (paralleled with PETSc). This step generates the geometry-informed snapshots for ROM (recommend to use). 
+  - `ReferNS_steady_parallel.edp` is designed for performing finite-element simulations (steady) with various shapes of domains on a reference domain (parallelized with PETSc). This step generates the geometry-informed snapshots for ROM (recommend to use). 
     Implement with `ff-mpirun -np 16 ReferNS_steady_parallel.edp -v 0` where 16 stands for the number of cores for mpi.
   - `ReferNS_transient_parallel.edp` is the transient version. It takes much more time to generate a steady solution, but can be used for time-dependent problems.
   - `StandardNS.edp` is the standard finite-element simulation for the flow on its original domain. It is used for validation of the solution achieved on the reference domain
