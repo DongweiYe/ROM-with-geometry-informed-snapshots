@@ -2,7 +2,7 @@
 ### Non-intrusive reduced-order modelling with geometry-informed snapshots
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10029572.svg)](https://doi.org/10.5281/zenodo.10029572)
 
-This repository is associated to the publication of "[Data-driven reduced-order modelling for blood flow simulations with geometry-informed snapshots](https://arxiv.org/abs/2302.11006)". 
+This repository is associated to the publication of "[Data-driven reduced-order modelling for blood flow simulations with geometry-informed snapshots](https://www.sciencedirect.com/science/article/pii/S0021999123007349)". 
 
 This repository presents the implementation of two synthetic hemodynamics examples, stenosis and bifurcation in 2D. The implementation of the finite element simulation is based on open source [FreeFEM](https://freefem.org/) and the surface registration is achieved by shape analysis software [deformatrica](https://www.deformetrica.org/). The non-intrusive reduced order models are constructed with proper orthogonal decomposition (POD) with radial basis function (RBF) interpolation.
 
